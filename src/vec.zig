@@ -1,0 +1,99 @@
+const std = @import("std");
+
+pub const Vec3 = struct {
+    data: @Vector(3, f64),
+
+    pub fn init(x_: f64, y_: f64, z_: f64) Vec3 {
+        return Vec3{ .data = @Vector(3, f64){ x_, y_, z_ } };
+    }
+
+    pub fn zero() Vec3 {
+        return Vec3.init(0.0, 0.0, 0.0);
+    }
+
+    pub fn x(self: *const Vec3) f64 {
+        return self.data[0];
+    }
+
+    pub fn y(self: *const Vec3) f64 {
+        return self.data[1];
+    }
+
+    pub fn z(self: *const Vec3) f64 {
+        return self.data[2];
+    }
+
+    pub fn neg(self: *Vec3) *Vec3 {
+        self.data = -self.data;
+        return self;
+    }
+
+    pub fn addEq(self: *Vec3, other: f64) *Vec3 {
+        self.data += @splat(other);
+        return self;
+    }
+
+    pub fn mulEq(self: *Vec3, other: f64) *Vec3 {
+        self.data *= @splat(other);
+        return self;
+    }
+
+    pub fn divEq(self: *Vec3, other: f64) *Vec3 {
+        self.data /= @splat(other);
+        return self;
+    }
+
+    pub fn dot(self: *const Vec3, other: Vec3) f64 {
+        return @reduce(.Add, self.data * other.data);
+    }
+
+    pub fn length(self: *const Vec3) f64 {
+        return std.math.sqrt(self.dot(self.*));
+    }
+
+    pub fn length_squared(self: *const Vec3) f64 {
+        return self.dot(self.*);
+    }
+
+    pub fn add(u: *const Vec3, v: Vec3) Vec3 {
+        return Vec3{ .data = u.data + v.data };
+    }
+
+    pub fn sub(u: *const Vec3, v: Vec3) Vec3 {
+        return Vec3{ .data = u.data - v.data };
+    }
+
+    pub fn mul(u: *Vec3, v: Vec3) Vec3 {
+        return Vec3{ .data = u.data * v.data };
+    }
+
+    pub fn sum_scalar(u: *const Vec3, scalar: f64) Vec3 {
+        return Vec3{ .data = u.data + @as(@Vector(3, f64), @splat(scalar)) };
+    }
+
+    pub fn div_scalar(u: *const Vec3, scalar: f64) Vec3 {
+        return Vec3{ .data = u.data / @as(@Vector(3, f64), @splat(scalar)) };
+    }
+
+    pub fn mul_scalar(u: *const Vec3, scalar: f64) Vec3 {
+        return Vec3{ .data = u.data * @as(@Vector(3, f64), @splat(scalar)) };
+    }
+
+    pub fn dot_between(u: *const Vec3, v: Vec3) f64 {
+        return @as(f64, @reduce(.Add, u.data * v.data));
+    }
+
+    pub fn cross_product(u: *const Vec3, v: *const Vec3) Vec3 {
+        const x_: f64 = u.y() * v.z() - u.z() * v.y();
+        const y_: f64 = u.z() * v.x() - u.x() * v.z();
+        const z_: f64 = u.x() * v.y() - u.y() * v.x();
+        return Vec3.init(x_, y_, z_);
+    }
+
+    pub fn unit(u: *const Vec3) Vec3 {
+        return u.div_scalar(u.length());
+    }
+};
+
+pub const Point3 = Vec3;
+pub const Color3 = Vec3;

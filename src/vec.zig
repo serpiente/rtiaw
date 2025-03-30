@@ -1,5 +1,5 @@
 const std = @import("std");
-
+const Utils = @import("./Utils.zig");
 pub const Vec3 = struct {
     data: @Vector(3, f64),
 
@@ -9,6 +9,14 @@ pub const Vec3 = struct {
 
     pub fn zero() Vec3 {
         return Vec3.init(0.0, 0.0, 0.0);
+    }
+
+    pub fn random() Vec3 {
+        return Vec3.init(Utils.randomDouble(), Utils.randomDouble(), Utils.randomDouble());
+    }
+
+    pub fn randomBounded(min: f64, max: f64) Vec3 {
+        return Vec3.init(Utils.randomDoubleBounded(min, max), Utils.randomDoubleBounded(min, max), Utils.randomDoubleBounded(min, max));
     }
 
     pub fn x(self: *const Vec3) f64 {
@@ -79,7 +87,7 @@ pub const Vec3 = struct {
         return Vec3{ .data = u.data * @as(@Vector(3, f64), @splat(scalar)) };
     }
 
-    pub fn dot_between(u: *const Vec3, v: Vec3) f64 {
+    pub fn dot_between(u: *const Vec3, v: *const Vec3) f64 {
         return @as(f64, @reduce(.Add, u.data * v.data));
     }
 
@@ -92,6 +100,25 @@ pub const Vec3 = struct {
 
     pub fn unit(u: *const Vec3) Vec3 {
         return u.div_scalar(u.length());
+    }
+
+    pub fn random_unit_vector() Vec3 {
+        while (true) {
+            const rand_vec = Vec3.randomBounded(-1, 1);
+            const mag = rand_vec.length_squared();
+            if ((1e-160 < mag) and (mag <= 1)) {
+                return rand_vec.div_scalar(mag);
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: *const Vec3) Vec3 {
+        const on_unit_sphere = Vec3.random_unit_vector();
+        if (on_unit_sphere.dot_between(normal) > 0) {
+            return on_unit_sphere;
+        } else {
+            return on_unit_sphere.mul_scalar(-1);
+        }
     }
 };
 

@@ -120,6 +120,15 @@ pub const Vec3 = struct {
             return on_unit_sphere.mul_scalar(-1);
         }
     }
+
+    pub fn nearZero(v: Vec3) bool {
+        const s = 1e-8;
+        return @abs(v.x()) < s and @abs(v.y()) < s and @abs(v.z()) < s;
+    }
+
+    pub fn reflect(u: *const Vec3, normal: *const Vec3) Vec3 {
+        return u.sub(u.dot(normal).mul(normal).mul_scalar(2));
+    }
 };
 
 pub const Point3 = Vec3;

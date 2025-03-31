@@ -5,13 +5,15 @@ const Vec3 = @import("./vec.zig").Vec3;
 const Ray = @import("./Ray.zig").Ray;
 const HitRecord = @import("./Hittable.zig").HitRecord;
 const Hittable = @import("./Hittable.zig").Hittable;
+const Material = @import("./Material.zig").Material;
 
 pub const Sphere = struct {
     center: Point3,
     radius: f64,
+    material: Material,
 
-    pub fn init(center: Point3, radius: f64) Sphere {
-        return Sphere{ .center = center, .radius = radius };
+    pub fn init(center: Point3, radius: f64, material: Material) Sphere {
+        return Sphere{ .center = center, .radius = radius, .material = material};
     }
 
     pub fn hittable(self: *Sphere) Hittable {
@@ -49,6 +51,7 @@ pub const Sphere = struct {
             .point = hit_point,
             .front_face = front_face,
             .normal = if (front_face) normal else normal.mul_scalar(-1),
+            .material = self.material
         };
     }
 };

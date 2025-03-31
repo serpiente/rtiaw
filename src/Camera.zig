@@ -43,7 +43,7 @@ pub const Camera = struct {
         const pixel_00_loc: Vec3 = viewport_upper_left.add(pixel_delta_u.add(pixel_delta_v).mul_scalar(0.5));
 
         const samples_per_pixel: usize = 10;
-        const max_depth:usize = 50;
+        const max_depth: usize = 50;
 
         return .{
             .image_height = image_height,
@@ -68,11 +68,10 @@ pub const Camera = struct {
         while (col < self.image_width) : (col += 1) {
             var row: usize = 0;
             while (row < self.image_height) : (row += 1) {
-                
                 var color = Vec3.zero();
-                for(0..self.samples_per_pixel) |_| {
+                for (0..self.samples_per_pixel) |_| {
                     const ray = self.get_ray(row, col);
-                    color = color.add(self.ray_color(self.max_depth,ray, &world));
+                    color = color.add(self.ray_color(self.max_depth, ray, &world));
                 }
                 color = color.div_scalar(@as(f64, @floatFromInt(self.samples_per_pixel)));
                 const pixel = color3_to_rgb(color);
@@ -82,7 +81,7 @@ pub const Camera = struct {
         try ppm.save("image.ppm");
     }
 
-    pub fn get_ray(self: *const Camera, i: usize, j:usize) Ray {
+    pub fn get_ray(self: *const Camera, i: usize, j: usize) Ray {
         const i_off = @as(f64, @floatFromInt(i)) - 0.5 + Utils.randomDouble();
         const j_off = @as(f64, @floatFromInt(j)) - 0.5 + Utils.randomDouble();
         const pixel_center: Vec3 = self.pixel_00_loc.add(self.pixel_delta_u.mul_scalar(j_off)).add(self.pixel_delta_v.mul_scalar(i_off));
@@ -91,15 +90,20 @@ pub const Camera = struct {
         return ray;
     }
 
-    pub fn ray_color(self:*const Camera, depth: usize, ray: Ray, world: *const Hittable) Color3 {
-        if (depth <= 0){
+    pub fn ray_color(self: *const Camera, depth: usize, ray: Ray, world: *const Hittable) Color3 {
+        if (depth <= 0) {
             return Color3.zero();
         }
         const positive_timeline: Interval = .{ .t_min = 0.001, .t_max = std.math.inf(f64) };
         if (world.hit(ray, positive_timeline)) |hit_record| {
-            const dir = Vec3.random_on_hemisphere(&hit_record.normal);
-            return self.ray_color(depth - 1, Ray.init(hit_record.point, dir), world).mul_scalar(0.5);
-            //return hit_record.normal.add(Color3.init(1, 1, 1)).mul_scalar(0.5);
+            var scattered: Ray = undefined;
+            var attenuation: Color3 = undefined;
+
+            if (hit_record.material) |material| {
+                if (material.scatter(&ray, &hit_record, &attenuation, &scattered)) {
+                    return self.ray_color(depth - 1, scattered, world);
+                }
+            }
         }
 
         const unit_direction = ray.direction.unit();
@@ -110,6 +114,17 @@ pub const Camera = struct {
     }
 };
 
+pub fn linear_to_gamma(component: f64) f64 {
+    if (component > 0) {
+        return @sqrt(component);
+    }
+    return component;
+}
+
 pub fn color3_to_rgb(color: Color3) RGB {
-    return RGB{ .r = @intFromFloat(255.99 * color.x()), .g = @intFromFloat(255.99 * color.y()), .b = @intFromFloat(255.99 * color.z()) };
+    const r: u8 = @intFromFloat(255.99 * linear_to_gamma(color.x()));
+    const g: u8 = @intFromFloat(255.99 * linear_to_gamma(color.y()));
+    const b: u8 = @intFromFloat(255.99 * linear_to_gamma(color.z()));
+
+    return RGB{ .r = r, .g = g, .b = b };
 }

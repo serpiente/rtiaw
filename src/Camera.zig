@@ -110,6 +110,16 @@ pub const Camera = struct {
     }
 };
 
+fn linear_to_gamma(component: f64) f64 {
+    if (component > 0 ){
+        return @sqrt(component);
+    }
+    return 0;
+}
+
 pub fn color3_to_rgb(color: Color3) RGB {
-    return RGB{ .r = @intFromFloat(255.99 * color.x()), .g = @intFromFloat(255.99 * color.y()), .b = @intFromFloat(255.99 * color.z()) };
+    const r: u8 = @intFromFloat(255.99 * linear_to_gamma(color.x()));
+    const g: u8 = @intFromFloat(255.99 * linear_to_gamma(color.y()));
+    const b: u8 = @intFromFloat(255.99 * linear_to_gamma(color.z()));
+    return RGB{ .r = r, .g = g, .b = b};
 }

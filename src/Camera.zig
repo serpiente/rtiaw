@@ -24,34 +24,44 @@ pub const Camera = struct {
     samples_per_pixel: usize,
     max_depth: usize,
     vfov: f64,
+    lookfrom: Point3,
+    lookat: Point3,
+    vup: Point3,
 
     pub fn init(width: usize, aspect_ratio: f64) Camera {
         const samples_per_pixel: usize = 50;
         const max_depth: usize = 50;
         const vfov = 90.0;
-        const position = Vec3.zero();
+
+        const lookfrom = Point3.init(-2, 2, 1);
+        const lookat = Point3.init(0, 0, -1);
+        const vup = Point3.init(0, 1, 0);
+        const position = lookfrom;
 
         const image_width = width;
         const image_height: usize = @intFromFloat(@as(f64, @floatFromInt(image_width)) / aspect_ratio);
-        const focal_length: f64 = 1.0;
-
+        const focal_length: f64 = lookfrom.sub(lookat).length();
 
         const theta = degrees_to_radians(vfov);
-        const h = std.math.sin(theta/2);
+        const h = std.math.sin(theta / 2);
         const viewport_height: f64 = 2 * h * focal_length;
         const viewport_width: f64 = viewport_height * @as(f64, @floatFromInt(image_width)) / @as(f64, @floatFromInt(image_height));
 
-        const viewport_u = Vec3.init(viewport_width, 0, 0);
-        const viewport_v = Vec3.init(0, -viewport_height, 0);
+        const w = lookfrom.sub(lookat).unit();
+        const u = vup.cross_product(w).unit();
+        const v = w.cross_product(u);
+
+        const viewport_u = u.mul_scalar(viewport_width);
+        const viewport_v = v.mul_scalar(-1.0 * viewport_height);
 
         const pixel_delta_u = viewport_u.div_scalar(@floatFromInt(image_width));
         const pixel_delta_v = viewport_v.div_scalar(@floatFromInt(image_height));
 
-        const viewport_upper_left: Vec3 = position.sub(Vec3.init(0, 0, focal_length)).sub(viewport_u.div_scalar(2)).sub(viewport_v.div_scalar(2));
+        const viewport_upper_left: Vec3 = position.sub(w.mul_scalar(focal_length)).sub(viewport_u.div_scalar(2)).sub(viewport_v.div_scalar(2));
 
         const pixel_00_loc: Vec3 = viewport_upper_left.add(pixel_delta_u.add(pixel_delta_v).mul_scalar(0.5));
 
-        return .{ .image_height = image_height, .image_width = image_width, .focal_length = focal_length, .viewport_height = viewport_height, .viewport_width = viewport_width, .position = position, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .pixel_00_loc = pixel_00_loc, .samples_per_pixel = samples_per_pixel, .max_depth = max_depth, .vfov = vfov };
+        return .{ .image_height = image_height, .image_width = image_width, .focal_length = focal_length, .viewport_height = viewport_height, .viewport_width = viewport_width, .position = position, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .pixel_00_loc = pixel_00_loc, .samples_per_pixel = samples_per_pixel, .max_depth = max_depth, .vfov = vfov, .lookfrom = lookfrom, .lookat = lookat, .vup = vup };
     }
 
     fn degrees_to_radians(degrees: f64) f64 {

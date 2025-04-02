@@ -34,14 +34,14 @@ pub const Camera = struct {
 
 
     pub fn init(width: usize, aspect_ratio: f64) Camera {
-        const samples_per_pixel: usize = 200;
+        const samples_per_pixel: usize = 500;
         const max_depth: usize = 50;
         const vfov = 20.0;
-        const defocus_angle = 10;  // Variation angle of rays through each pixel
-        const focus_dist = 3.4;    // Distance from camera lookfrom point to plane of perfect focus
+        const defocus_angle = 0.6;  // Variation angle of rays through each pixel
+        const focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
 
-        const lookfrom = Point3.init(-2, 2, 1);
-        const lookat = Point3.init(0, 0, -1);
+        const lookfrom = Point3.init(13, 2, 3);
+        const lookat = Point3.init(0, 0, 0);
         const vup = Vec3.init(0, 1, 0);
         const position = lookfrom;
 

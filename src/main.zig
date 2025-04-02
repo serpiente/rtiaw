@@ -9,6 +9,7 @@ const Hittable = @import("./Hittable.zig").Hittable;
 const HittableList = @import("./Hittable.zig").HittableList;
 const Interval = @import("./Interval.zig").Interval;
 const Camera = @import("./Camera.zig").Camera;
+const Material = @import("./Material.zig").Material;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -23,11 +24,20 @@ pub fn main() !void {
     var world: HittableList = HittableList.init(allocator);
     defer world.deinit();
 
-    var sphere1 = Sphere.init(Point3.init(0, 0, -1), 0.5);
-    var sphere2 = Sphere.init(Point3.init(0, -100.5, -1), 100);
+    const material_ground = Material.Lambertian.init(Color3.init(0.8, 0.8, 0));
+    const material_center = Material.Lambertian.init(Color3.init(0.1, 0.2, 0.5));
+    const material_left = Material.Dialetric.init(1.0 / 1.33);
+    const material_right = Material.Metal.init(Color3.init(0.8, 0.6, 0.2));
+
+    var sphere1 = Sphere.init(Point3.init(0, -100.5, -1), 100, material_ground);
+    var sphere2 = Sphere.init(Point3.init(0, 0, -1.2), 0.5, material_center);
+    var sphere3 = Sphere.init(Point3.init(-1, 0, -1), 0.5, material_left);
+    var sphere4 = Sphere.init(Point3.init(1, 0, -1), 0.5, material_right);
 
     try world.add(sphere1.hittable());
     try world.add(sphere2.hittable());
+    try world.add(sphere3.hittable());
+    try world.add(sphere4.hittable());
 
     const camera = Camera.init(width, aspect_ratio);
 

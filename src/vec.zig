@@ -71,7 +71,7 @@ pub const Vec3 = struct {
         return Vec3{ .data = u.data - v.data };
     }
 
-    pub fn mul(u: *Vec3, v: Vec3) Vec3 {
+    pub fn mul(u: *const Vec3, v: Vec3) Vec3 {
         return Vec3{ .data = u.data * v.data };
     }
 
@@ -91,7 +91,7 @@ pub const Vec3 = struct {
         return @as(f64, @reduce(.Add, u.data * v.data));
     }
 
-    pub fn cross_product(u: *const Vec3, v: *const Vec3) Vec3 {
+    pub fn cross_product(u: *const Vec3, v: Vec3) Vec3 {
         const x_: f64 = u.y() * v.z() - u.z() * v.y();
         const y_: f64 = u.z() * v.x() - u.x() * v.z();
         const z_: f64 = u.x() * v.y() - u.y() * v.x();
@@ -118,6 +118,29 @@ pub const Vec3 = struct {
             return on_unit_sphere;
         } else {
             return on_unit_sphere.mul_scalar(-1);
+        }
+    }
+
+    pub fn near_zero(self: Vec3) bool {
+        const s = 1e-8;
+        return (@abs(self.x()) < s and @abs(self.y()) < s and @abs(self.z()) < s);
+    }
+
+    pub fn reflect(v: *const Vec3, n: Vec3) Vec3 {
+        return v.sub(n.mul_scalar(Vec3.dot(v, n)).mul_scalar(2));
+    }
+
+    pub fn refract(v: *const Vec3, n: Vec3, etai_over_etat: f64) Vec3 {
+        const cos_theta: f64 = @min(v.mul_scalar(-1).dot(n), 1.0);
+        const r_out_perp = v.add(n.mul_scalar(cos_theta)).mul_scalar(etai_over_etat);
+        const r_out_parallel = n.mul_scalar(-1 * @sqrt(@abs(1.0 - r_out_perp.length_squared())));
+        return (&r_out_perp).add(r_out_parallel);
+    }
+
+     pub fn random_in_unit_disk() Vec3 {
+        while (true) {
+            const p = Vec3.randomBounded(-1, 1);
+            if (p.length_squared() < 1) return p;
         }
     }
 };

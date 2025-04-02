@@ -5,11 +5,14 @@ const Interval = @import("./Interval.zig").Interval;
 const Point3 = @import("./vec.zig").Point3;
 const Vec3 = @import("./vec.zig").Vec3;
 
+const Material = @import("./Material.zig").Material;
+
 pub const HitRecord = struct {
     point: Point3,
     normal: Vec3,
     t: f64,
     front_face: bool,
+    material: Material,
 };
 
 pub const Hittable = struct {

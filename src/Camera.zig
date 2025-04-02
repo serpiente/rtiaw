@@ -23,80 +23,30 @@ pub const Camera = struct {
     pixel_00_loc: Vec3,
     samples_per_pixel: usize,
     max_depth: usize,
-    vfov: f64,
-    lookfrom: Point3,
-    lookat: Point3,
-    vup: Vec3,
-    defocus_angle: f64,
-    focus_dist: f64,
-    defocus_disk_u: Vec3,
-    defocus_disk_v: Vec3,
-
 
     pub fn init(width: usize, aspect_ratio: f64) Camera {
         const samples_per_pixel: usize = 200;
         const max_depth: usize = 50;
-        const vfov = 20.0;
-        const defocus_angle = 10;  // Variation angle of rays through each pixel
-        const focus_dist = 3.4;    // Distance from camera lookfrom point to plane of perfect focus
-
-        const lookfrom = Point3.init(-2, 2, 1);
-        const lookat = Point3.init(0, 0, -1);
-        const vup = Vec3.init(0, 1, 0);
-        const position = lookfrom;
+        const position = Vec3.zero();
 
         const image_width = width;
         const image_height: usize = @intFromFloat(@as(f64, @floatFromInt(image_width)) / aspect_ratio);
-        const focal_length: f64 = lookfrom.sub(lookat).length();
+        const focal_length: f64 = 1.0;
 
-        const theta = degrees_to_radians(vfov);
-        const h = @tan(theta / 2);
-        const viewport_height = 2 * h * focus_dist;
-        const viewport_width = viewport_height * (@as(f64, @floatFromInt(image_width)) / @as(f64, @floatFromInt(image_height)));
+        const viewport_height: f64 = 2.0;
+        const viewport_width: f64 = viewport_height * @as(f64, @floatFromInt(image_width)) / @as(f64, @floatFromInt(image_height));
 
-
-        // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        const w = lookfrom.sub(lookat).unit();
-        const u = vup.cross_product(w).unit();
-        const v = w.cross_product(u);
-
-        const viewport_u = u.mul_scalar(viewport_width);
-        const viewport_v = v.mul_scalar(-1.0 * viewport_height);
+        const viewport_u = Vec3.init(viewport_width, 0, 0);
+        const viewport_v = Vec3.init(0, -viewport_height, 0);
 
         const pixel_delta_u = viewport_u.div_scalar(@floatFromInt(image_width));
         const pixel_delta_v = viewport_v.div_scalar(@floatFromInt(image_height));
 
-
-        const viewport_upper_left: Vec3 = position.sub(w.mul_scalar(focus_dist)).sub(viewport_u.div_scalar(2.0)).sub(viewport_v.div_scalar(2));
-        //const viewport_upper_left: Vec3 = position.sub(Vec3.init(0, 0, focal_length)).sub(viewport_u.div_scalar(2)).sub(viewport_v.div_scalar(2));
-
-        const defocus_radius = focus_dist * @tan(degrees_to_radians(defocus_angle / 2.0));
-        const defocus_disk_u = u.mul_scalar(defocus_radius);
-        const defocus_disk_v = v.mul_scalar(defocus_radius);
+        const viewport_upper_left: Vec3 = position.sub(Vec3.init(0, 0, focal_length)).sub(viewport_u.div_scalar(2)).sub(viewport_v.div_scalar(2));
 
         const pixel_00_loc: Vec3 = viewport_upper_left.add(pixel_delta_u.add(pixel_delta_v).mul_scalar(0.5));
 
-        return .{
-            .image_height = image_height,
-            .image_width = image_width,
-            .focal_length = focal_length,
-            .viewport_height = viewport_height,
-            .viewport_width = viewport_width,
-            .position = position,
-            .pixel_delta_u = pixel_delta_u,
-            .pixel_delta_v = pixel_delta_v,
-            .pixel_00_loc = pixel_00_loc,
-            .samples_per_pixel = samples_per_pixel,
-            .max_depth = max_depth,
-            .vfov = vfov,
-            .lookfrom = lookfrom,
-            .lookat = lookat,
-            .vup = vup,
-            .defocus_angle = defocus_angle,
-            .focus_dist = focus_dist,
-            .defocus_disk_u = defocus_disk_u,
-            .defocus_disk_v = defocus_disk_v,
-        };
+        return .{ .image_height = image_height, .image_width = image_width, .focal_length = focal_length, .viewport_height = viewport_height, .viewport_width = viewport_width, .position = position, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .pixel_00_loc = pixel_00_loc, .samples_per_pixel = samples_per_pixel, .max_depth = max_depth };
     }
 
     fn degrees_to_radians(degrees: f64) f64 {
@@ -128,8 +78,7 @@ pub const Camera = struct {
         const i_off = @as(f64, @floatFromInt(i)) - 0.5 + Utils.randomDouble();
         const j_off = @as(f64, @floatFromInt(j)) - 0.5 + Utils.randomDouble();
         const pixel_center: Vec3 = self.pixel_00_loc.add(self.pixel_delta_u.mul_scalar(j_off)).add(self.pixel_delta_v.mul_scalar(i_off));
-        const ray_origin = if (self.defocus_angle <= 0) self.position else self.defocus_disk_sample();
-        const ray_direction: Vec3 = pixel_center.sub(ray_origin);
+        const ray_direction: Vec3 = pixel_center.sub(self.position);
         const ray = Ray.init(self.position, ray_direction);
         return ray;
     }

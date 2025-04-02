@@ -137,7 +137,7 @@ pub const Vec3 = struct {
         return (&r_out_perp).add(r_out_parallel);
     }
 
-     pub fn random_in_unit_disk() Vec3 {
+    pub fn random_in_unit_disk() Vec3 {
         while (true) {
             const p = Vec3.randomBounded(-1, 1);
             if (p.length_squared() < 1) return p;

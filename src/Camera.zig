@@ -23,17 +23,22 @@ pub const Camera = struct {
     pixel_00_loc: Vec3,
     samples_per_pixel: usize,
     max_depth: usize,
+    vfov: f64,
 
     pub fn init(width: usize, aspect_ratio: f64) Camera {
-        const samples_per_pixel: usize = 200;
+        const samples_per_pixel: usize = 50;
         const max_depth: usize = 50;
+        const vfov = 90.0;
         const position = Vec3.zero();
 
         const image_width = width;
         const image_height: usize = @intFromFloat(@as(f64, @floatFromInt(image_width)) / aspect_ratio);
         const focal_length: f64 = 1.0;
 
-        const viewport_height: f64 = 2.0;
+
+        const theta = degrees_to_radians(vfov);
+        const h = std.math.sin(theta/2);
+        const viewport_height: f64 = 2 * h * focal_length;
         const viewport_width: f64 = viewport_height * @as(f64, @floatFromInt(image_width)) / @as(f64, @floatFromInt(image_height));
 
         const viewport_u = Vec3.init(viewport_width, 0, 0);
@@ -46,7 +51,7 @@ pub const Camera = struct {
 
         const pixel_00_loc: Vec3 = viewport_upper_left.add(pixel_delta_u.add(pixel_delta_v).mul_scalar(0.5));
 
-        return .{ .image_height = image_height, .image_width = image_width, .focal_length = focal_length, .viewport_height = viewport_height, .viewport_width = viewport_width, .position = position, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .pixel_00_loc = pixel_00_loc, .samples_per_pixel = samples_per_pixel, .max_depth = max_depth };
+        return .{ .image_height = image_height, .image_width = image_width, .focal_length = focal_length, .viewport_height = viewport_height, .viewport_width = viewport_width, .position = position, .pixel_delta_u = pixel_delta_u, .pixel_delta_v = pixel_delta_v, .pixel_00_loc = pixel_00_loc, .samples_per_pixel = samples_per_pixel, .max_depth = max_depth, .vfov = vfov };
     }
 
     fn degrees_to_radians(degrees: f64) f64 {
